@@ -5,6 +5,10 @@
 
 ---
 
+## Live Website Link 
+https://edulift-nbrmupyfc-pratiksha-79ba.vercel.app/
+
+
 ## 🌟 What EduLift AI Does
 
 EduLift AI bridges the gap between academic data and supportive mentorship:
