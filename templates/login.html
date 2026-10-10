@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — EduLift AI{% endblock %}
+
+{% block content %}
+<div class="login-container">
+  <div class="login-card" style="max-width: 520px;">
+    <div class="login-header">
+      <div class="brand-icon" style="margin: 0 auto; width: 48px; height: 48px; font-size: 1.5rem;">E</div>
+      <h2>Welcome to EduLift AI</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">Sign in to your student or faculty portal</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}" id="login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="e.g. student_demo or priya_demo" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required>
+      </div>
+
+      <div id="persona-summary" style="display: none; margin-bottom: 1rem; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.825rem; background: #f0fdfa; border: 1px solid #99f6e4; color: #0f766e;">
+        <!-- Dynamically updated by JS -->
+      </div>
+
+      <button type="submit" class="btn btn-navy" style="width: 100%; padding: 0.75rem; font-size: 0.95rem;">
+        Sign In to Portal
+      </button>
+    </form>
+
+    <!-- Hackathon Demo Personas Switcher -->
+    <div class="demo-account-box" style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid var(--border-color);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-weight: 700; color: var(--primary-dark); font-size: 0.85rem;">⚡ 1-Click Demo Accounts (Presentation Ready)</span>
+        <span class="badge badge-teal" style="font-size: 0.7rem;">6 Student Personas</span>
+      </div>
+      <p style="font-size: 0.775rem; color: #64748b; margin-bottom: 0.75rem;">
+        Click any persona below to load diverse, realistic datasets for your presentation:
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+        <!-- 1. Aarav -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="student_demo" data-desc="Aarav Sharma — Mixed Profile: Good overall (80%), but recent Math assignment dipped from 78 to 58%, triggering targeted review recommendation." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          🟡 <strong>Aarav</strong> (Math Dip &bull; 80%)
+        </button>
+
+        <!-- 2. Priya -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="priya_demo" data-desc="Priya Patel — Star Performer: 95.7% Attendance, 93.8% Average Marks, all goals on track, excelling badges, &lt;3% ML support risk." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          🟢 <strong>Priya</strong> (Star &bull; 96% Att, 94% M)
+        </button>
+
+        <!-- 3. Rohan -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="rohan_demo" data-desc="Rohan Verma — High Support Needed: 63.8% Attendance, 54.9% Average Marks, declining trend, 89.5% ML alert, active faculty intervention." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          🔴 <strong>Rohan</strong> (Needs Support &bull; 64%)
+        </button>
+
+        <!-- 4. Sneha -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="sneha_demo" data-desc="Sneha Kulkarni — Rapid Improver / Comeback: Started with 54% in Math, soared to 84%! Sharp positive momentum (+30%) recognized by AI." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          📈 <strong>Sneha</strong> (Comeback &bull; +30% Trend)
+        </button>
+
+        <!-- 5. Vikram -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="vikram_demo" data-desc="Vikram Singh — Theory Attendance Gap: Missed 8 AM classes (66% Math att) but scores 77% on tests. System isolates transit issue without labeling failure." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          🟣 <strong>Vikram</strong> (Transit Gap &bull; 75%)
+        </button>
+
+        <!-- 6. Ananya -->
+        <button type="button" class="btn btn-outline btn-sm persona-btn" data-user="ananya_demo" data-desc="Ananya Iyer — Steady & Consistent: 88.1% Attendance, 82.7% Average Marks, balanced progress across all subjects and goals." style="text-align: left; justify-content: flex-start; padding: 0.4rem 0.6rem; font-size: 0.78rem; background: #ffffff;">
+          ⚪ <strong>Ananya</strong> (Steady &bull; 88% Att, 83%)
+        </button>
+      </div>
+
+      <!-- Faculty Mentor Button -->
+      <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
+        <button type="button" class="btn btn-navy btn-sm persona-btn" data-user="faculty_demo" data-desc="Dr. Sunita Rao — Faculty Mentor: Cohort analytics, real-time student search roster, early support opportunities, and intervention tracking." style="width: 100%; justify-content: center; font-size: 0.8rem;">
+          🎓 <strong>Faculty Mentor (Dr. Sunita Rao — Cohort Analytics)</strong>
+        </button>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.25rem;">
+      <a href="{{ url_for('landing') }}" style="color: var(--teal-accent); font-size: 0.85rem; text-decoration: none; font-weight: 500;">
+        &larr; Back to Landing Page
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const userInput = document.getElementById("username");
+    const passInput = document.getElementById("password");
+    const summaryBox = document.getElementById("persona-summary");
+
+    // Handle Persona Click
+    document.querySelectorAll(".persona-btn").forEach(btn => {
+      btn.addEventListener("click", function() {
+        const u = this.getAttribute("data-user");
+        const desc = this.getAttribute("data-desc");
+
+        userInput.value = u;
+        passInput.value = "Password123!";
+
+        if (summaryBox && desc) {
+          summaryBox.style.display = "block";
+          summaryBox.innerHTML = `<strong>Selected Persona:</strong> ${desc}`;
+        }
+      });
+    });
+
+    // Check query params (?demo=student or ?demo=rohan, etc.)
+    const params = new URLSearchParams(window.location.search);
+    const demo = params.get('demo');
+    if (demo) {
+      const matchBtn = document.querySelector(`.persona-btn[data-user="${demo}"]`) || 
+                       document.querySelector(`.persona-btn[data-user="${demo}_demo"]`);
+      if (matchBtn) {
+        matchBtn.click();
+      } else if (demo === 'student') {
+        userInput.value = 'student_demo';
+        passInput.value = 'Password123!';
+      } else if (demo === 'faculty') {
+        userInput.value = 'faculty_demo';
+        passInput.value = 'Password123!';
+      }
+    }
+  });
+</script>
+{% endblock %}

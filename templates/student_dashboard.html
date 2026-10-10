@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard — EduLift AI{% endblock %}
+{% block page_title %}My Academic Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div style="margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; color: var(--primary-dark); font-weight: 700;">
+      Welcome back, {{ profile.full_name }} 👋
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+      {{ profile.cohort_name }} &bull; Roll No: <strong>{{ profile.roll_number }}</strong> &bull; Semester {{ profile.semester }}
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <!-- Snapshot Form -->
+    <form method="POST" action="{{ url_for('create_snapshot') }}">
+      <button type="submit" class="btn btn-outline btn-sm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        Save Progress Snapshot
+      </button>
+    </form>
+    <a href="{{ url_for('study_planner') }}" class="btn btn-primary btn-sm">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      Weekly Study Planner
+    </a>
+  </div>
+</div>
+
+<!-- 1. Key Academic Metrics (Stat Cards) -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Overall Attendance</span>
+      <span class="badge {% if attendance_summary.overall_percentage >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+        {% if attendance_summary.overall_percentage >= 75 %}Good Standing{% else %}Attention Needed{% endif %}
+      </span>
+    </div>
+    <div class="stat-value">{{ attendance_summary.overall_percentage }}%</div>
+    <div class="stat-footer">
+      {{ attendance_summary.attended_classes }} attended of {{ attendance_summary.total_classes }} classes
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Average Marks</span>
+      <span class="badge badge-navy">Cumulative</span>
+    </div>
+    <div class="stat-value">{{ marks_summary.overall_average }}%</div>
+    <div class="stat-footer">Across all registered subjects</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Study Goals</span>
+      <span class="badge badge-teal">{{ completed_goals_count }}/{{ total_goals_count }} Done</span>
+    </div>
+    <div class="stat-value">{{ pending_goals_count }}</div>
+    <div class="stat-footer">Pending tasks for this week</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>AI Advisories</span>
+      <span class="badge badge-info">{{ rec_analysis.recommendations|length }} Action Items</span>
+    </div>
+    <div class="stat-value">{{ rec_analysis.indicator_count }}</div>
+    <div class="stat-footer">Identified areas for constructive focus</div>
+  </div>
+</div>
+
+<!-- 2. Charts and Academic Breakdown -->
+<div class="grid-3">
+  <!-- Left Column: Marks Progress Chart & Subject Table -->
+  <div>
+    <!-- Chart Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Academic Assessment Progress Trend
+        </div>
+        <span class="badge badge-teal">Chronological</span>
+      </div>
+      <div class="card-body">
+        <div style="height: 250px; position: relative;">
+          <canvas id="studentMarksChart" data-chart-data='{{ marks_chart_json|safe }}'></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject Performance Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Subject-Wise Academic Summary
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Code</th>
+              <th>Attendance</th>
+              <th>Avg Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in subject_rows %}
+            <tr>
+              <td><strong>{{ sub.name }}</strong></td>
+              <td><span class="badge badge-navy">{{ sub.code }}</span></td>
+              <td>
+                {{ sub.attended }}/{{ sub.total }} ({{ sub.att_pct }}%)
+              </td>
+              <td>
+                {% if sub.avg_score is not none %}
+                  <strong>{{ sub.avg_score }}%</strong>
+                {% else %}
+                  <span class="text-muted">No tests recorded</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if sub.avg_score and sub.avg_score >= 80 %}
+                  <span class="badge badge-success">Strong</span>
+                {% elif sub.att_pct < 75 or (sub.avg_score and sub.avg_score < 65) %}
+                  <span class="badge badge-warning">Focus Area</span>
+                {% else %}
+                  <span class="badge badge-teal">On Track</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Assessments Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          Recent Assessment Marks
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Assessment</th>
+              <th>Score</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mark in marks_summary.recent_assessments %}
+            <tr>
+              <td>{{ mark.date_recorded }}</td>
+              <td>{{ mark.subject_name }}</td>
+              <td>{{ mark.assessment_name }}</td>
+              <td>{{ mark.score }} / {{ mark.max_score }}</td>
+              <td>
+                {% set pct = (mark.score * 100 / mark.max_score)|round(1) %}
+                <span class="badge {% if pct >= 75 %}badge-success{% elif pct >= 60 %}badge-teal{% else %}badge-warning{% endif %}">
+                  {{ pct }}%
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                No assessment records found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: AI Recommendations, Strengths/Focus, Goals -->
+  <div>
+    <!-- Strengths & Areas for Attention -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">✨ Academic Insights</div>
+      </div>
+      <div class="card-body">
+        <div style="margin-bottom: 1rem;">
+          <h5 style="color: var(--teal-dark); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.4rem;">
+            Key Strengths
+          </h5>
+          <ul style="padding-left: 1.25rem; font-size: 0.875rem; color: #334155;">
+            {% for s in rec_analysis.strengths %}
+              <li style="margin-bottom: 0.3rem;">{{ s }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div>
+          <h5 style="color: #92400e; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.4rem;">
+            Subjects Needing Attention
+          </h5>
+          <ul style="padding-left: 1.25rem; font-size: 0.875rem; color: #334155;">
+            {% for nf in rec_analysis.needs_focus %}
+              <li style="margin-bottom: 0.3rem;">{{ nf }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Study Recommendations -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Supportive AI Recommendations
+        </div>
+      </div>
+      <div class="card-body" style="padding: 1.25rem;">
+        {% for rec in rec_analysis.recommendations %}
+        <div class="recommendation-card urgent-{{ rec.urgency }}">
+          <div class="rec-header">
+            <span class="rec-title">{{ rec.title }}</span>
+            <span class="badge {% if rec.urgency == 'High' %}badge-warning{% else %}badge-teal{% endif %}">
+              {{ rec.category }}
+            </span>
+          </div>
+          <div class="rec-section">
+            <span class="rec-label">Why this appeared:</span> {{ rec.reason }}
+          </div>
+          <div class="rec-section">
+            <span class="rec-label">Academic Evidence:</span> {{ rec.evidence }}
+          </div>
+          <div class="rec-action-box">
+            <strong>Recommended Action:</strong> {{ rec.action }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Machine Learning Demonstration Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Machine Learning Advisory (Demo)
+        </div>
+        <span class="badge badge-navy">scikit-learn Logistic Regression</span>
+      </div>
+      <div class="card-body">
+        {% if ml_prediction.status == 'available' %}
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <span style="font-size: 0.9rem; font-weight: 600;">Status Prediction:</span>
+            <span class="badge {% if ml_prediction.support_needed %}badge-warning{% else %}badge-success{% endif %}" style="font-size: 0.85rem;">
+              {{ ml_prediction.prediction }}
+            </span>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Support Advisory Probability: <strong>{{ ml_prediction.probability_pct }}%</strong>
+          </div>
+
+          <div style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+            <div style="font-weight: 600; color: #475569; margin-bottom: 0.35rem;">Contributing Factors:</div>
+            {% for item in ml_prediction.factors %}
+              <div style="font-size: 0.8rem; margin-bottom: 0.35rem; padding: 0.4rem 0.6rem; background: #f8fafc; border-radius: 4px; border-left: 2px solid var(--teal-accent);">
+                <strong>{{ item.factor }} ({{ item.value }}):</strong> {{ item.impact }}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            <span>{{ ml_prediction.prediction }}: {{ ml_prediction.factors[0] }}</span>
+          </div>
+        {% endif %}
+
+        <div class="advisory-notice">
+          <span>⚠️ <em>{{ ml_prediction.warning }}</em></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Study Goals Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          Weekly Study Goals
+        </div>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+          <!-- Create Goal Form -->
+          <form method="POST" action="{{ url_for('create_goal') }}">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="text" name="title" class="form-control" placeholder="New study goal (e.g. Practice 5 Python loops)" required>
+              <input type="date" name="target_date" class="form-control" style="max-width: 150px;">
+            </div>
+            <button type="submit" class="btn btn-navy btn-sm" style="width: 100%;">+ Add Goal</button>
+          </form>
+        </div>
+
+        <div>
+          {% for goal in goals %}
+          <div class="goal-item">
+            <div class="goal-info">
+              <div class="goal-title {% if goal.is_completed %}completed{% endif %}">
+                {{ goal.title }}
+              </div>
+              <div class="goal-meta">
+                Due: {{ goal.target_date or 'This Week' }} &bull; Created: {{ goal.created_at[:10] }}
+              </div>
+            </div>
+            <form method="POST" action="{{ url_for('toggle_goal', goal_id=goal.id) }}">
+              <button type="submit" class="btn btn-sm {% if goal.is_completed %}btn-outline{% else %}btn-primary{% endif %}">
+                {% if goal.is_completed %}✓ Done{% else %}Mark Done{% endif %}
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            No study goals set yet. Add one above!
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Progress Snapshots History -->
+<div class="card" style="margin-top: 1rem;">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Historical Progress Snapshots
+    </div>
+    <span class="badge badge-teal">Point-in-Time Audits</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Snapshot Date & Time</th>
+          <th>Attendance %</th>
+          <th>Average Marks %</th>
+          <th>Completed Goals</th>
+          <th>Pending Goals</th>
+          <th>Data Origin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for snap in snapshots %}
+        <tr>
+          <td>{{ snap.created_at }}</td>
+          <td><strong>{{ snap.attendance_pct }}%</strong></td>
+          <td><strong>{{ snap.avg_marks }}%</strong></td>
+          <td><span class="badge badge-success">{{ snap.completed_goals }}</span></td>
+          <td><span class="badge badge-warning">{{ snap.pending_goals }}</span></td>
+          <td>
+            {% if snap.is_seed == 1 %}
+              <span class="badge badge-navy">Fictional Seed Data</span>
+            {% else %}
+              <span class="badge badge-teal">User Captured</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+            No snapshots recorded yet. Click "Save Progress Snapshot" above to record one.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

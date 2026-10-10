@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Cohort Analytics — EduLift AI{% endblock %}
+{% block page_title %}Cohort Analytics & Mentorship{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; color: var(--primary-dark); font-weight: 700;">
+      {{ cohort.name }}
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+      Faculty Advisor: <strong>{{ faculty_user.full_name }}</strong> &bull; {{ cohort.description }}
+    </p>
+  </div>
+  <div>
+    <span class="badge badge-teal" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+      Active Advisory Cohort
+    </span>
+  </div>
+</div>
+
+<!-- 1. Cohort Aggregates (Stat Cards) -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Permitted Students</span>
+      <span class="badge badge-navy">Cohort Size</span>
+    </div>
+    <div class="stat-value">{{ total_students }}</div>
+    <div class="stat-footer">Enrolled in active semester</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Cohort Average Attendance</span>
+      <span class="badge {% if cohort_avg_attendance >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+        Benchmark 75%
+      </span>
+    </div>
+    <div class="stat-value">{{ cohort_avg_attendance }}%</div>
+    <div class="stat-footer">Aggregated across all cohort classes</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Cohort Average Marks</span>
+      <span class="badge badge-teal">Academic Standing</span>
+    </div>
+    <div class="stat-value">{{ cohort_avg_marks }}%</div>
+    <div class="stat-footer">Across all subject assessments</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-header">
+      <span>Active Interventions</span>
+      <span class="badge badge-info">Mentorship</span>
+    </div>
+    <div class="stat-value">{{ active_interventions_count }}</div>
+    <div class="stat-footer">Planned or in progress check-ins</div>
+  </div>
+</div>
+
+<!-- 2. Cohort Subject Chart & Support Alerts -->
+<div class="grid-3">
+  <div>
+    <!-- Cohort Subject Bar Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Cohort Subject Performance Averages
+        </div>
+        <span class="badge badge-teal">Subject Breakdown</span>
+      </div>
+      <div class="card-body">
+        <div style="height: 250px; position: relative;">
+          <canvas id="facultyCohortChart" data-chart-data='{{ cohort_chart_json|safe }}'></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Cohort Roster Table with Search -->
+    <div class="card">
+      <div class="card-header" style="flex-wrap: wrap; gap: 0.75rem;">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          Student Roster & Academic Status
+        </div>
+        <div style="max-width: 250px; width: 100%;">
+          <input type="text" id="student-search" class="form-control form-control-sm" placeholder="🔍 Search name or roll number...">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Attendance %</th>
+              <th>Avg Score %</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="student-table-body">
+            {% for s in student_roster %}
+            <tr>
+              <td><strong>{{ s.roll_number }}</strong></td>
+              <td>{{ s.full_name }}</td>
+              <td>
+                <span class="badge {% if s.attendance_pct >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+                  {{ s.attendance_pct }}%
+                </span>
+              </td>
+              <td>
+                <strong>{{ s.avg_marks }}%</strong>
+              </td>
+              <td>
+                {% if s.support_flag %}
+                  <span class="badge badge-warning">Check-in Advised</span>
+                {% elif s.avg_marks >= 80 and s.attendance_pct >= 85 %}
+                  <span class="badge badge-success">Excelling</span>
+                {% else %}
+                  <span class="badge badge-teal">On Track</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('faculty_student_detail', student_id=s.student_id) }}" class="btn btn-navy btn-sm">
+                  View & Support &rarr;
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Supportive Alerts & Quick Links -->
+  <div>
+    <!-- Support Indicators (Early Alerts) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Support Opportunities
+        </div>
+        <span class="badge badge-warning">{{ support_alerts|length }} Flagged</span>
+      </div>
+      <div class="card-body" style="padding: 1.25rem;">
+        {% for alert in support_alerts %}
+        <div class="recommendation-card" style="border-left-color: #f59e0b; margin-bottom: 1rem;">
+          <div class="rec-header">
+            <strong>{{ alert.student_name }} ({{ alert.roll_number }})</strong>
+          </div>
+          <div style="font-size: 0.85rem; color: #1e293b; margin: 0.4rem 0;">
+            <em>"{{ alert.supportive_message }}"</em>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            <strong>Underlying Reason:</strong> {{ alert.reason }}
+          </div>
+          <a href="{{ url_for('faculty_student_detail', student_id=alert.student_id) }}" class="btn btn-outline btn-sm" style="width: 100%;">
+            Open Student Support Plan &rarr;
+          </a>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">
+          No pending support alerts! All students are currently above baseline thresholds.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Machine Learning Demonstration Model Summary -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          ML Demonstration Status
+        </div>
+      </div>
+      <div class="card-body">
+        {% if ml_metrics %}
+        <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+          Model: <strong>{{ ml_metrics.model_type }}</strong>
+        </div>
+        <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+          Trained on: <strong>{{ ml_metrics.sample_size_total }} synthetic records</strong>
+        </div>
+        <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+          Validation Accuracy: <strong>{{ (ml_metrics.accuracy * 100)|round(1) }}%</strong> (Baseline: {{ (ml_metrics.baseline_accuracy * 100)|round(1) }}%)
+        </div>
+        <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+          F1 Score: <strong>{{ (ml_metrics.f1_score * 100)|round(1) }}%</strong> &bull; Precision: <strong>{{ (ml_metrics.precision * 100)|round(1) }}%</strong>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" style="font-size: 0.85rem;">
+          Model not loaded. Run <code>python ml/train_model.py</code> to train.
+        </div>
+        {% endif %}
+        <div class="advisory-notice">
+          <span>⚠️ Advisory synthetic demonstration. Not used for disciplinary actions.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Cohort Intervention Records -->
+<div class="card" style="margin-top: 1rem;">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      Recorded Mentorship & Interventions
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Indicator Reason</th>
+          <th>Suggested Action</th>
+          <th>Follow-Up Date</th>
+          <th>Status</th>
+          <th>Outcome / Notes</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in cohort_interventions %}
+        <tr>
+          <td>
+            <strong>{{ item.student_name }}</strong><br>
+            <small class="text-muted">{{ item.roll_number }}</small>
+          </td>
+          <td>{{ item.indicator_reason }}</td>
+          <td>{{ item.suggested_action }}</td>
+          <td>{{ item.follow_up_date or 'None Set' }}</td>
+          <td>
+            <span class="badge
+              {% if item.status == 'Completed' %}badge-success
+              {% elif item.status == 'In progress' %}badge-info
+              {% elif item.status == 'Planned' %}badge-warning
+              {% else %}badge-navy{% endif %}">
+              {{ item.status }}
+            </span>
+          </td>
+          <td>{{ item.outcome_notes or item.faculty_notes or 'No notes recorded' }}</td>
+          <td>
+            <a href="{{ url_for('faculty_student_detail', student_id=item.student_id) }}" class="btn btn-outline btn-sm">
+              Update &rarr;
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+            No faculty interventions currently recorded.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

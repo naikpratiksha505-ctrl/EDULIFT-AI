@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Student Support Profile — {{ student.full_name }} — EduLift AI{% endblock %}
+{% block page_title %}Student Support Profile{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="{{ url_for('faculty_dashboard') }}" class="btn btn-outline btn-sm" style="margin-bottom: 1rem;">
+    &larr; Back to Cohort Analytics
+  </a>
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.6rem; color: var(--primary-dark); font-weight: 700;">
+        {{ student.full_name }}
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Roll No: <strong>{{ student.roll_number }}</strong> &bull; Cohort: {{ student.cohort_name }} &bull; Semester {{ student.semester }} &bull; Email: {{ student.email }}
+      </p>
+    </div>
+    <div>
+      <span class="badge {% if attendance_summary.overall_percentage >= 75 %}badge-success{% else %}badge-warning{% endif %}" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+        Attendance: {{ attendance_summary.overall_percentage }}%
+      </span>
+      <span class="badge badge-navy" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+        Avg Marks: {{ marks_summary.overall_average }}%
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Layout Grid -->
+<div class="grid-2">
+  <!-- Left Column: Academic Records, Attendance Correction, Assessment Addition -->
+  <div>
+    <!-- Attendance Management Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          Attendance Records & Corrections
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Attended / Total</th>
+              <th>Percentage</th>
+              <th>Update Classes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for att in attendance_summary.records %}
+            <tr>
+              <td><strong>{{ att.subject_name }}</strong> ({{ att.subject_code }})</td>
+              <td>{{ att.attended_classes }} / {{ att.total_classes }}</td>
+              <td>
+                {% set pct = ((att.attended_classes * 100 / att.total_classes) if att.total_classes > 0 else 0)|round(1) %}
+                <span class="badge {% if pct >= 75 %}badge-success{% else %}badge-warning{% endif %}">
+                  {{ pct }}%
+                </span>
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('faculty_update_attendance', student_id=student.id) }}" style="display: flex; gap: 0.3rem; align-items: center;">
+                  <input type="hidden" name="subject_id" value="{{ att.subject_id }}">
+                  <input type="number" name="attended_classes" value="{{ att.attended_classes }}" min="0" style="width: 55px; padding: 0.2rem 0.4rem; border: 1px solid var(--border-color); border-radius: 4px;" title="Attended">
+                  <span>/</span>
+                  <input type="number" name="total_classes" value="{{ att.total_classes }}" min="1" style="width: 55px; padding: 0.2rem 0.4rem; border: 1px solid var(--border-color); border-radius: 4px;" title="Total">
+                  <button type="submit" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem;" title="Save Correction">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Assessment Marks & Record Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          Record New Assessment Mark
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('faculty_add_assessment', student_id=student.id) }}">
+          <div class="grid-2" style="gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <select name="subject_id" class="form-control" required>
+                {% for sub in subjects %}
+                  <option value="{{ sub.id }}">{{ sub.name }} ({{ sub.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Assessment Name</label>
+              <input type="text" name="assessment_name" class="form-control" placeholder="e.g. Quiz 2, Assignment 2" required>
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Score & Max Score</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="number" step="0.5" min="0" name="score" class="form-control" placeholder="Score" required>
+                <span>/</span>
+                <input type="number" step="0.5" min="1" name="max_score" class="form-control" value="100" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date Recorded</label>
+              <input type="date" name="date_recorded" class="form-control" value="{{ today_str }}" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-navy btn-sm" style="width: 100%;">
+            + Record Assessment Mark
+          </button>
+        </form>
+      </div>
+
+      <div class="table-responsive" style="border-top: 1px solid var(--border-color);">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Assessment</th>
+              <th>Score</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for am in marks_summary.recent_assessments %}
+            <tr>
+              <td>{{ am.date_recorded }}</td>
+              <td>{{ am.subject_name }}</td>
+              <td>{{ am.assessment_name }}</td>
+              <td>{{ am.score }}/{{ am.max_score }}</td>
+              <td>
+                {% set pct = (am.score * 100 / am.max_score)|round(1) %}
+                <span class="badge {% if pct >= 75 %}badge-success{% elif pct >= 60 %}badge-teal{% else %}badge-warning{% endif %}">
+                  {{ pct }}%
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1rem;">No marks recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Interventions & Supportive Counseling -->
+  <div>
+    <!-- Supportive AI Advice -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🤖 Rule-Based & ML Student Insights</div>
+      </div>
+      <div class="card-body">
+        <div style="font-size: 0.9rem; margin-bottom: 0.75rem;">
+          <strong>ML Advisory Prediction:</strong>
+          <span class="badge {% if ml_prediction.support_needed %}badge-warning{% else %}badge-success{% endif %}">
+            {{ ml_prediction.prediction }} ({{ ml_prediction.probability_pct }}%)
+          </span>
+        </div>
+
+        {% for rec in rec_analysis.recommendations %}
+        <div class="recommendation-card" style="margin-bottom: 0.75rem; padding: 0.85rem;">
+          <div style="font-weight: 700; color: var(--primary-dark); font-size: 0.9rem;">{{ rec.title }}</div>
+          <div style="font-size: 0.8rem; color: #475569; margin: 0.25rem 0;">{{ rec.reason }}</div>
+          <div style="font-size: 0.8rem; color: #166534; background: #f0fdf4; padding: 0.3rem 0.5rem; border-radius: 4px;">
+            Action: {{ rec.action }}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="advisory-notice">
+          <span>⚠️ Advisory synthetic demonstration. Not used for disciplinary actions.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Supportive Intervention Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Add Supportive Mentoring Intervention
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('faculty_add_intervention', student_id=student.id) }}">
+          <div class="form-group">
+            <label class="form-label">Indicator Reason / Observation</label>
+            <input type="text" name="indicator_reason" class="form-control" placeholder="e.g. Attendance decreased below 75% in Math for AI" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Suggested Action / Support Strategy</label>
+            <input type="text" name="suggested_action" class="form-control" placeholder="e.g. Peer tutoring pairing and office hour concept review" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Faculty Notes (Supportive context)</label>
+            <textarea name="faculty_notes" class="form-control" placeholder="e.g. Student reported morning commute difficulties. Suggested tutorial recordings."></textarea>
+          </div>
+
+          <div class="grid-2" style="gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Follow-up Date</label>
+              <input type="date" name="follow_up_date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Initial Status</label>
+              <select name="status" class="form-control">
+                <option value="Planned">Planned</option>
+                <option value="In progress">In progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Dismissed">Dismissed</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            + Save Intervention
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Existing Interventions for this Student -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Intervention History & Status Updates</div>
+      </div>
+      <div class="card-body" style="padding: 1rem;">
+        {% for inv in interventions %}
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span class="badge
+              {% if inv.status == 'Completed' %}badge-success
+              {% elif inv.status == 'In progress' %}badge-info
+              {% elif inv.status == 'Planned' %}badge-warning
+              {% else %}badge-navy{% endif %}">
+              {{ inv.status }}
+            </span>
+            <small style="color: var(--text-muted);">{{ inv.created_at[:10] }} &bull; By {{ inv.faculty_name }}</small>
+          </div>
+
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--primary-dark);">
+            {{ inv.indicator_reason }}
+          </div>
+          <div style="font-size: 0.85rem; color: #475569; margin: 0.25rem 0;">
+            <strong>Action:</strong> {{ inv.suggested_action }}
+          </div>
+          {% if inv.faculty_notes %}
+          <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">
+            <strong>Notes:</strong> {{ inv.faculty_notes }}
+          </div>
+          {% endif %}
+          {% if inv.outcome_notes %}
+          <div style="font-size: 0.8rem; color: #166534; background: #f0fdf4; padding: 0.4rem; border-radius: 4px; margin-bottom: 0.5rem;">
+            <strong>Outcome:</strong> {{ inv.outcome_notes }}
+          </div>
+          {% endif %}
+
+          <!-- Update Status Form -->
+          <form method="POST" action="{{ url_for('faculty_update_intervention', intervention_id=inv.id) }}" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.5rem;">
+            <input type="hidden" name="student_id" value="{{ student.id }}">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <select name="status" class="form-control form-control-sm" style="flex: 1;">
+                <option value="Planned" {% if inv.status == 'Planned' %}selected{% endif %}>Planned</option>
+                <option value="In progress" {% if inv.status == 'In progress' %}selected{% endif %}>In progress</option>
+                <option value="Completed" {% if inv.status == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Dismissed" {% if inv.status == 'Dismissed' %}selected{% endif %}>Dismissed</option>
+              </select>
+              <input type="date" name="follow_up_date" class="form-control form-control-sm" value="{{ inv.follow_up_date }}" style="flex: 1;">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" name="outcome_notes" class="form-control form-control-sm" placeholder="Outcome notes or reason for dismissal..." value="{{ inv.outcome_notes or '' }}">
+              <button type="submit" class="btn btn-navy btn-sm" style="white-space: nowrap;">Update</button>
+            </div>
+          </form>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1rem;">
+          No interventions recorded yet for this student.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

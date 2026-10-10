@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Study Planner — EduLift AI{% endblock %}
+{% block page_title %}Weekly Study Planner{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.6rem; color: var(--primary-dark); font-weight: 700;">
+      Weekly Study Planner 🗓️
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+      Balance study hours across subjects, prepare for upcoming assessments, and maintain healthy focus intervals.
+    </p>
+  </div>
+  <div>
+    <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline btn-sm">
+      &larr; Back to Overview Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="alert alert-info">
+  <span>💡 <strong>Important Note:</strong> This is a suggested study plan. Adjust it to your needs and available time.</span>
+</div>
+
+<!-- Layout Grid -->
+<div class="grid-3">
+  <!-- Left Column: Timetable Tasks grouped by day -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Current Weekly Timetable Tasks
+        </div>
+        <span class="badge badge-teal">{{ tasks|length }} Scheduled Tasks</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+        {% for day in days %}
+          {% set day_tasks = tasks | selectattr("day_of_week", "equalto", day) | list %}
+          {% if day_tasks %}
+            <div style="padding: 0.75rem 1.25rem; background: #f8fafc; font-weight: 700; font-size: 0.85rem; color: #475569; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+              📅 {{ day }}
+            </div>
+            {% for t in day_tasks %}
+              <div class="goal-item" style="padding: 0.85rem 1.25rem;">
+                <div class="goal-info">
+                  <div class="goal-title {% if t.is_completed %}completed{% endif %}">
+                    {{ t.title }}
+                  </div>
+                  <div class="goal-meta">
+                    ⏰ {{ t.start_time or 'Flexible' }} &bull; ⏱️ {{ t.duration_minutes }} mins &bull;
+                    <span class="badge {% if t.priority == 'High' %}badge-warning{% elif t.priority == 'Medium' %}badge-teal{% else %}badge-navy{% endif %}" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                      {{ t.priority }} Priority
+                    </span>
+                    {% if t.subject_name %} &bull; {{ t.subject_name }}{% endif %}
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <form method="POST" action="{{ url_for('toggle_task', task_id=t.id) }}">
+                    <button type="submit" class="btn btn-sm {% if t.is_completed %}btn-outline{% else %}btn-primary{% endif %}">
+                      {% if t.is_completed %}✓ Done{% else %}Mark Done{% endif %}
+                    </button>
+                  </form>
+                  <form method="POST" action="{{ url_for('delete_task', task_id=t.id) }}">
+                    <button type="submit" class="btn btn-outline btn-sm" style="color: #ef4444;" title="Delete task">
+                      ✕
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+
+        {% if not tasks %}
+        <div style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.95rem;">
+          No study tasks scheduled yet. Use the automated generator on the right or manually add a task!
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Automated Generator & Custom Task Addition -->
+  <div>
+    <!-- Automated Schedule Generator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Smart Schedule Generator
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Provide your available study hours this week. The planner automatically distributes 45-minute focused blocks with breaks, prioritizing subjects with upcoming assessments.
+        </p>
+
+        <form method="POST" action="{{ url_for('generate_schedule') }}">
+          <div class="form-group">
+            <label class="form-label">Available Study Time (Hours this week)</label>
+            <input type="number" name="available_hours" class="form-control" value="8" min="2" max="40" step="1" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">E.g. 8 hours = ~8 focused study sessions of 45 mins each.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prioritize Upcoming Assessment (Optional)</label>
+            <select name="priority_subject_id" class="form-control">
+              <option value="">-- Even Distribution Across All Subjects --</option>
+              {% for sub in subjects %}
+                <option value="{{ sub.id }}">{{ sub.name }} ({{ sub.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-navy" style="width: 100%;">
+            ⚡ Generate Suggested Timetable
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Manual Custom Task Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">+ Add Custom Study Task</div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('create_task') }}">
+          <div class="form-group">
+            <label class="form-label">Task Title</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Read Chapter 3 Python OOP" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Subject</label>
+            <select name="subject_id" class="form-control">
+              <option value="">General / Self-Study</option>
+              {% for sub in subjects %}
+                <option value="{{ sub.id }}">{{ sub.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="grid-2" style="gap: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label">Day</label>
+              <select name="day_of_week" class="form-control">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Time</label>
+              <input type="time" name="start_time" class="form-control" value="18:00">
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap: 0.5rem;">
+            <div class="form-group">
+              <label class="form-label">Duration (Mins)</label>
+              <input type="number" name="duration_minutes" class="form-control" value="45" min="15" step="15" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select name="priority" class="form-control">
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-outline" style="width: 100%;">
+            Add Task
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

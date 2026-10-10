@@ -1,0 +1,35 @@
+{
+  "model_type": "Logistic Regression",
+  "features": [
+    "attendance_pct",
+    "previous_marks_avg",
+    "assignment_completion_rate",
+    "recent_trend"
+  ],
+  "sample_size_total": 200,
+  "train_samples": 160,
+  "test_samples": 40,
+  "baseline_accuracy": 0.775,
+  "baseline_f1": 0.0,
+  "accuracy": 0.975,
+  "precision": 1.0,
+  "recall": 0.8889,
+  "f1_score": 0.9412,
+  "confusion_matrix": [
+    [
+      31,
+      0
+    ],
+    [
+      1,
+      8
+    ]
+  ],
+  "feature_weights": {
+    "attendance_pct": -2.575381290802329,
+    "previous_marks_avg": -2.0678459800256137,
+    "assignment_completion_rate": -1.2984970641690394,
+    "recent_trend": -1.7033397884458044
+  },
+  "intercept": -3.2591176270560585
+}

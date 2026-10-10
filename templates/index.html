@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}EduLift AI — AI-Powered Student Analytics and Success Platform{% endblock %}
+
+{% block content %}
+<div class="landing-hero">
+  <div class="hero-pill">
+    <span>💡 AI-Powered Academic Success & Retention</span>
+  </div>
+  <h1 class="hero-heading">
+    Every Student Deserves a<br><span>Chance to Succeed.</span>
+  </h1>
+  <p class="hero-subtext">
+    EduLift AI provides early constructive insights, personalized study schedules,
+    and supportive mentoring tools to help students thrive before challenges become obstacles.
+  </p>
+
+  <div class="hero-buttons">
+    <a href="{{ url_for('login') }}" class="btn btn-navy" style="padding: 0.85rem 1.75rem; font-size: 1rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+      Login to Portal
+    </a>
+    <a href="{{ url_for('login') }}?demo=student" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      Explore Demo as Student
+    </a>
+  </div>
+
+  <div class="feature-cards-grid">
+    <div class="feature-card">
+      <div style="font-size: 2rem;">📊</div>
+      <h3>Actionable Analytics</h3>
+      <p>Continuous monitoring of attendance percentages, subject assessment trends, and progress milestones without negative stigma.</p>
+    </div>
+
+    <div class="feature-card">
+      <div style="font-size: 2rem;">🤖</div>
+      <h3>Supportive AI Guidance</h3>
+      <p>Rule-based insights and machine learning predictions with clear explanations: what triggered it, why, and what constructive steps to take.</p>
+    </div>
+
+    <div class="feature-card">
+      <div style="font-size: 2rem;">🗓️</div>
+      <h3>Smart Study Planner</h3>
+      <p>Personalized weekly timetable generation that respects your study bandwidth and balances test preparation with short healthy breaks.</p>
+    </div>
+
+    <div class="feature-card">
+      <div style="font-size: 2rem;">🤝</div>
+      <h3>Faculty Mentorship</h3>
+      <p>Enables instructors to record structured check-in interventions, coordinate peer tutoring, and track follow-up progress transparently.</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 3.5rem; padding: 1.75rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); text-align: left;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h4 style="color: var(--primary-dark); font-weight: 700; margin: 0;">🎓 6 Realistic Student Personas Ready for Evaluation</h4>
+      <span class="badge badge-teal">Varied Academic Datasets</span>
+    </div>
+    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+      Each student account features a completely distinct academic profile, attendance level, assessment trajectory, and recommendation set:
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+      <a href="{{ url_for('login') }}?demo=priya_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #f0fdf4; border-radius: var(--radius-sm); border: 1px solid #bbf7d0;">
+        <div style="font-weight: 700; color: #166534; font-size: 0.9rem;">🟢 Priya Patel (Star Student)</div>
+        <div style="font-size: 0.8rem; color: #15803d; margin-top: 0.25rem;">95.7% Attendance &bull; 93.8% Marks &bull; Excelling status</div>
+      </a>
+
+      <a href="{{ url_for('login') }}?demo=student_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #fefce8; border-radius: var(--radius-sm); border: 1px solid #fef08a;">
+        <div style="font-weight: 700; color: #854d0e; font-size: 0.9rem;">🟡 Aarav Sharma (Mixed Profile)</div>
+        <div style="font-size: 0.8rem; color: #a16207; margin-top: 0.25rem;">80.0% Attendance &bull; 76.8% Marks &bull; Math dip alert</div>
+      </a>
+
+      <a href="{{ url_for('login') }}?demo=rohan_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #fef2f2; border-radius: var(--radius-sm); border: 1px solid #fecaca;">
+        <div style="font-weight: 700; color: #991b1b; font-size: 0.9rem;">🔴 Rohan Verma (Needs Support)</div>
+        <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 0.25rem;">63.8% Attendance &bull; 54.9% Marks &bull; 89% ML alert</div>
+      </a>
+
+      <a href="{{ url_for('login') }}?demo=sneha_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #eff6ff; border-radius: var(--radius-sm); border: 1px solid #bfdbfe;">
+        <div style="font-weight: 700; color: #1e40af; font-size: 0.9rem;">📈 Sneha Kulkarni (Rapid Improver)</div>
+        <div style="font-size: 0.8rem; color: #2563eb; margin-top: 0.25rem;">84.8% Attendance &bull; +30% Upward momentum in tests</div>
+      </a>
+
+      <a href="{{ url_for('login') }}?demo=vikram_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #faf5ff; border-radius: var(--radius-sm); border: 1px solid #e9d5ff;">
+        <div style="font-weight: 700; color: #6b21a8; font-size: 0.9rem;">🟣 Vikram Singh (Transit Gap)</div>
+        <div style="font-size: 0.8rem; color: #7e22ce; margin-top: 0.25rem;">74.8% Attendance &bull; 76.8% Marks &bull; Morning gap</div>
+      </a>
+
+      <a href="{{ url_for('login') }}?demo=ananya_demo" style="text-decoration: none; color: inherit; display: block; padding: 0.85rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px solid #cbd5e1;">
+        <div style="font-weight: 700; color: #334155; font-size: 0.9rem;">⚪ Ananya Iyer (Steady On-Track)</div>
+        <div style="font-size: 0.8rem; color: #475569; margin-top: 0.25rem;">88.1% Attendance &bull; 82.7% Marks &bull; Balanced pace</div>
+      </a>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+      <div style="font-size: 0.85rem; color: #475569;">
+        <strong>Faculty Account:</strong> <code>faculty_demo</code> &bull; Password for all accounts: <code>Password123!</code>
+      </div>
+      <a href="{{ url_for('login') }}?demo=faculty" class="btn btn-navy btn-sm">
+        Sign in as Faculty Mentor &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
